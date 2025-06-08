@@ -3,8 +3,8 @@
 #define SDL_MAIN_HANDLED
 
 #include <math.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_ttf.h>
 
 enum { RED = 0, GREEN = 1, BLUE = 2, YELLOW = 3 };
