@@ -1,6 +1,8 @@
 #define TOTAL_STEPS 52
 
 #define SDL_MAIN_HANDLED
+
+#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 
@@ -8,49 +10,91 @@ enum { RED = 0, GREEN = 1, BLUE = 2, YELLOW = 3 };
 
 const int startIndex[4] = {
     0,   // Red starts at index 0
-    13,  // Green starts 13 steps ahead
-    26,  // Yellow
-    39   // Blue
+    39,  // Green
+    13,  // Blue
+    26   // Yellow
 };
 
 typedef struct {
     int x, y;
     SDL_Color color;
-    int stepIndex;  // Index in universalPath
-    int inPlay;     // 0 = in base, 1 = active
+    int stepIndex;  // index on universalPath
+    int inPlay;     // 0 = in base, 1 = in play
+    int inHome;     // 0 = normal, 1 = on home path
+    int homeStepIndex; // index in home path if inHome = 1
 } Token;
 
+SDL_Point redHomePath[7] = {
+    {305, 25},   // Entry to home
+    {305, 65},
+    {305, 105},
+    {305, 145},
+    {305, 185},
+    {305, 225},
+    {305, 265}   // Final home position
+};
+
+SDL_Point greenHomePath[7] = {
+    {25, 305},   // Entry to home
+    {65, 305},
+    {105, 305},
+    {145, 305},
+    {185, 305},
+    {225, 305},
+    {265, 305}   // Final home position
+};
+
+SDL_Point blueHomePath[7] = {
+    {585, 305},   // Entry to home
+    {545, 305},
+    {505, 305},
+    {465, 305},
+    {425, 305},
+    {385, 305},
+    {345, 305}   // Final home position
+};
+
+SDL_Point yellowHomePath[7] = {
+    {305, 585},   // Entry to home
+    {305, 545},
+    {305, 505},
+    {305, 465},
+    {305, 425},
+    {305, 385},
+    {305, 345}   // Final home position
+};
+
 SDL_Point universalPath[52] = {
-    {345,  65},  // 0 Red start
+    {345,  65},  // Red start
     {345, 105},
     {345, 145},
     {345, 185},
     {345, 225},
-    {385, 265},  // Red entry to center
+    {385, 265},  
     {425, 265},
     {465, 265},
     {505, 265},
     {545, 265},
-    {585, 265},  // Right-most
+    {585, 265},  
     {585, 305},
     {585, 345},
     {545, 345},
     {505, 345},
     {465, 345},
-    {425, 345},  // Bottom right corner
+    {425, 345},  
     {385, 345},
     {345, 385},
     {345, 425},
     {345, 465},
     {345, 505},
-    {345, 545},  // Bottom-most
+    {345, 545},  
     {345, 585},
     {305, 585},
     {265, 585},
     {265, 545},
     {265, 505},
     {265, 465},
-    {265, 425},  // Bottom left
+    {265, 425},  
     {265, 385},
     {225, 345},
     {185, 345},
@@ -66,13 +110,13 @@ SDL_Point universalPath[52] = {
     {185, 265},
     {225, 265},
     {265, 225},
-    {265, 185},   // Left-most
+    {265, 185},   
     {265, 145},
     {265, 105},
     {265,  65},
     {265,  25},
-    {305,  25},
-    {345,  25}  // Green center entry
+    {305,  25}, // Red Home entry
+    {345,  25}  
 };
 
 // Declare the function before main
@@ -122,28 +166,28 @@ int main() {
     // Keep tokens outside the loop so their state is preserved
     Token tokens[4][4] = {
     	{   // Red tokens
-            {445, 125, {105, 0, 0}},   // Red 1
-            {485,  85, {105, 0, 0}},   // Red 2
-            {525, 125, {105, 0, 0}},   // Red 3
-            {485, 165, {105, 0, 0}}    // Red 4
+            {445, 125, {255, 0, 0}},   // Red 1
+            {485,  85, {255, 0, 0}},   // Red 2
+            {525, 125, {255, 0, 0}},   // Red 3
+            {485, 165, {255, 0, 0}}    // Red 4
     	},
     	{   // Green tokens
-            {125, 165, {0, 105, 0}},   // Green 1
-            { 85, 125, {0, 105, 0}},   // Green 2
-            {125,  85, {0, 105, 0}},   // Green 3
-            {165, 125, {0, 105, 0}}    // Green 4
+            {125, 165, {0, 255, 0}},   // Green 1
+            { 85, 125, {0, 255, 0}},   // Green 2
+            {125,  85, {0, 255, 0}},   // Green 3
+            {165, 125, {0, 255, 0}}    // Green 4
     	},
     	{   // Blue tokens
-            {485, 445, {0, 0, 105}},   // Blue 1
-            {525, 485, {0, 0, 105}},   // Blue 2
-            {485, 525, {0, 0, 105}},   // Blue 3
-            {445, 485, {0, 0, 105}}    // Blue 4
+            {485, 445, {0, 0, 255}},   // Blue 1
+            {525, 485, {0, 0, 255}},   // Blue 2
+            {485, 525, {0, 0, 255}},   // Blue 3
+            {445, 485, {0, 0, 255}}    // Blue 4
     	},
     	{   // Yellow tokens
-            {165, 485, {105, 105, 0}}, // Yellow 1
-            {125, 525, {105, 105, 0}}, // Yellow 2
-            { 85, 485, {105, 105, 0}}, // Yellow 3
-            {125, 445, {105, 105, 0}}  // Yellow 4
+            {165, 485, {255, 255, 0}}, // Yellow 1
+            {125, 525, {255, 255, 0}}, // Yellow 2
+            { 85, 485, {255, 255, 0}}, // Yellow 3
+            {125, 445, {255, 255, 0}}  // Yellow 4
     	}
     };
 
@@ -256,23 +300,117 @@ int main() {
     return 0;
 }
 
-// Function for generate Tokens
-void draw_token(SDL_Renderer* renderer, Token token) {
-    SDL_SetRenderDrawColor(renderer, token.color.r, token.color.g, token.color.b, 255);
-    SDL_Rect rect = { token.x, token.y, 30, 30 };
-    SDL_RenderFillRect(renderer, &rect);
+
+// Helper function to draw filled circle
+void draw_filled_circle(SDL_Renderer* renderer, int centerX, int centerY, int radius, SDL_Color fillColor, SDL_Color borderColor) {
+    // Draw filled circle
+    SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, 255);
+    for (int w = 0; w < radius * 2; w++) {
+        for (int h = 0; h < radius * 2; h++) {
+            int dx = radius - w;
+            int dy = radius - h;
+            if ((dx * dx + dy * dy) <= (radius - 2) * (radius - 2)) {
+                SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
+            }
+        }
+    }
+
+    // Draw border
+    SDL_SetRenderDrawColor(renderer, borderColor.r, borderColor.g, borderColor.b, 255);
+    for (int w = 0; w < radius * 2; w++) {
+        for (int h = 0; h < radius * 2; h++) {
+            int dx = radius - w;
+            int dy = radius - h;
+            int distSq = dx * dx + dy * dy;
+            if (distSq <= radius * radius && distSq >= (radius - 1.5) * (radius - 1.5)) {
+                SDL_RenderDrawPoint(renderer, centerX + dx, centerY + dy);
+            }
+        }
+    }
 }
 
-// Function for token movement on PATH
+// Updated draw_token function
+void draw_token(SDL_Renderer* renderer, Token token) {
+    int radius = 15;
+    int centerX = token.x + radius;
+    int centerY = token.y + radius;
+
+    SDL_Color borderColor = {0, 0, 0, 255};  // Black border
+    draw_filled_circle(renderer, centerX, centerY, radius, token.color, borderColor);
+}
+
+
+// Function to move Tokens
 void move_token(Token* token, int direction) {
     if (!token->inPlay) return;
 
+    if (token->inHome) {
+        token->homeStepIndex += direction;
+
+        // Clamp to final position
+        if (token->homeStepIndex >= 7) token->homeStepIndex = 6;
+        if (token->homeStepIndex < 0) token->homeStepIndex = 0;
+
+        SDL_Point pos;
+
+        // Choose correct home path based on token color
+        if (token->color.r == 255 && token->color.g == 0 && token->color.b == 0) {
+            pos = redHomePath[token->homeStepIndex];
+        } else if (token->color.r == 0 && token->color.g == 255 && token->color.b == 0) {
+            pos = greenHomePath[token->homeStepIndex];
+        } else if (token->color.r == 0 && token->color.g == 0 && token->color.b == 255) {
+            pos = blueHomePath[token->homeStepIndex];
+        } else if (token->color.r == 255 && token->color.g == 255 && token->color.b == 0) {
+            pos = yellowHomePath[token->homeStepIndex];
+        }
+
+        token->x = pos.x;
+        token->y = pos.y;
+        return;
+    }
+
+    // Move on the universal path
     token->stepIndex = (token->stepIndex + direction + TOTAL_STEPS) % TOTAL_STEPS;
 
     SDL_Point pos = universalPath[token->stepIndex];
     token->x = pos.x;
     token->y = pos.y;
+
+    // Switch to home path at the correct position
+    if (token->color.r == 255 && token->color.g == 0 && token->color.b == 0 &&
+        token->x == 305 && token->y == 25) {
+        token->inHome = 1;
+        token->homeStepIndex = 0;
+        token->x = redHomePath[0].x;
+        token->y = redHomePath[0].y;
+    }
+
+    if (token->color.r == 0 && token->color.g == 255 && token->color.b == 0 &&
+        token->x == 25 && token->y == 305) {
+        token->inHome = 1;
+        token->homeStepIndex = 0;
+        token->x = greenHomePath[0].x;
+        token->y = greenHomePath[0].y;
+    }
+
+    if (token->color.r == 0 && token->color.g == 0 && token->color.b == 255 &&
+        token->x == 585 && token->y == 305) {
+        token->inHome = 1;
+        token->homeStepIndex = 0;
+        token->x = blueHomePath[0].x;
+        token->y = blueHomePath[0].y;
+    }
+
+    if (token->color.r == 255 && token->color.g == 255 && token->color.b == 0 &&
+        token->x == 305 && token->y == 585) {
+        token->inHome = 1;
+        token->homeStepIndex = 0;
+        token->x = yellowHomePath[0].x;
+        token->y = yellowHomePath[0].y;
+    }
 }
+
+
 
 
 
