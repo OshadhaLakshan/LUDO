@@ -1,4 +1,4 @@
-# 🎲 LUDO for UCSC - SDL2 Edition
+# 🎲 LUDO like UCSC - SDL2 Edition
 
 A custom-built **LUDO game written in C using SDL2**, tailored for the University of Colombo School of Computing (UCSC).  
 This is a fully playable, GUI-based board game with support for player movement, captures, and winning conditions.
@@ -7,7 +7,7 @@ This is a fully playable, GUI-based board game with support for player movement,
 
 ## 📸 Preview
 
-*(Insert screenshot or gameplay GIF here)*
+![image](https://github.com/user-attachments/assets/6f91dd1a-bb68-4efe-8c0c-b82bf1b045c1)
 
 ---
 
@@ -19,7 +19,7 @@ This is a fully playable, GUI-based board game with support for player movement,
 - 🚫 Collision and capture system (knock tokens back to base)
 - 🏆 Win detection when all 4 tokens reach final home
 - 🎨 Clean UI with circular tokens and colored borders
-- 🧱 Uses SDL2 and SDL2_image for rendering
+- 🧱 Uses SDL2, SDL2_ttf and SDL2_image for rendering
 
 ---
 
@@ -27,7 +27,7 @@ This is a fully playable, GUI-based board game with support for player movement,
 
 - OS: Windows (MSYS2 environment)
 - Compiler: `gcc` via MinGW (64-bit)
-- Libraries: SDL2, SDL2_image
+- Libraries: SDL2, SDL2_image, SDL2_ttf
 
 ---
 
@@ -84,8 +84,8 @@ pacman -S mingw-w64-x86_64-SDL2 mingw-w64-x86_64-SDL2_image
 If using Git:
 
 ```bash
-git clone https://github.com/yourusername/ludo-ucsc.git
-cd ludo-ucsc
+git clone https://github.com/oshadhalakshan/ludo.git
+cd ludo
 ```
 
 Or download and extract the ZIP.
@@ -94,14 +94,13 @@ Or download and extract the ZIP.
 
 ### ✅ 6. Compile the Game
 
-Make sure you're in the directory where `sdl.c` and `icon.res` are located. Then run:
+Make sure you're in the directory where `main.c` and `icon.res` are located. Then run:
 
 ```bash
-gcc sdl.c icon.res -o sdl.exe -lSDL2 -lSDL2_image
+gcc main.c logic.c icon.res -o app.exe -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
 ```
 
-✅ If successful, this will create `sdl.exe`.
-
+✅ If successful, this will create `app.exe`.
 ---
 
 ### ✅ 7. Run the Game
@@ -109,7 +108,7 @@ gcc sdl.c icon.res -o sdl.exe -lSDL2 -lSDL2_image
 Launch the game with:
 
 ```bash
-./sdl.exe
+app
 ```
 
 Enjoy the colorful UCSC-themed LUDO experience! 🎉
@@ -124,9 +123,10 @@ Enjoy the colorful UCSC-themed LUDO experience! 🎉
 | `9`         | Select Green token group       |
 | `1`         | Select Blue token group        |
 | `3`         | Select Yellow token group      |
-| `A / D`     | Cycle between tokens in group  |
-| `J / L`     | Same for other direction       |
+| `A / D`     | Cycle between tokens in upper  |
+| `J / L`     | Same for lower tokens in cycle |
 | `←` `→`     | Move token counter/clockwise   |
+| `TAB`       | Switch between same tokens     |
 
 > ⚠️ Tokens must be selected and placed on the board before movement.
 
@@ -147,11 +147,15 @@ Enjoy the colorful UCSC-themed LUDO experience! 🎉
 
 ```
 .
-├── sdl.c           # Main game logic
+├── main.c          # Main function
+├── logic.c          # Game logic
 ├── icon.rc         # Optional: icon resource file
 ├── icon.res        # Compiled icon resource
-├── README.md       # This file
-└── assets/         # Images and future assets (if any)
+├── include/        # Include headers
+├── lib/            # Libraries
+├── assets/         # Images and future assets (if any)
+├── <app.exe>       # Application
+└── <random.dll>    # DLL files
 ```
 
 ---
@@ -160,11 +164,12 @@ Enjoy the colorful UCSC-themed LUDO experience! 🎉
 
 - Always use **MinGW 64-bit shell** for all steps.
 - If SDL2 is not found at compile-time, re-check your installed packages.
-- Make sure `sdl.c` uses the proper header:
+- Make sure `main.c` uses the proper header:
 
 ```c
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 ```
 
 ---
