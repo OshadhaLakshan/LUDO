@@ -148,7 +148,7 @@ Enjoy the colorful UCSC-themed LUDO experience! 🎉
 ```
 .
 ├── main.c          # Main function
-├── logic.c          # Game logic
+├── logic.c         # Game logic
 ├── icon.rc         # Optional: icon resource file
 ├── icon.res        # Compiled icon resource
 ├── include/        # Include headers
