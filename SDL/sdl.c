@@ -16,12 +16,13 @@ const int startIndex[4] = {
 };
 
 typedef struct {
-    int x, y;
+    int x, y;                  // Current position
+    int baseX, baseY;          // Original base position (for returning)
     SDL_Color color;
-    int stepIndex;  // index on universalPath
-    int inPlay;     // 0 = in base, 1 = in play
-    int inHome;     // 0 = normal, 1 = on home path
-    int homeStepIndex; // index in home path if inHome = 1
+    int stepIndex;             // Universal path index
+    int homeStepIndex;         // For final home path
+    int inPlay;                // 1 = active, 0 = in base
+    int inHome;                // 1 = in final home path
 } Token;
 
 SDL_Point redHomePath[7] = {
@@ -121,7 +122,7 @@ SDL_Point universalPath[52] = {
 
 // Declare the function before main
 void draw_token(SDL_Renderer* renderer, Token token);
-void move_token(Token* token, int direction);
+void move_token(Token* token, int direction, Token tokens[4][4]);
 
 int main() {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -166,30 +167,31 @@ int main() {
     // Keep tokens outside the loop so their state is preserved
     Token tokens[4][4] = {
     	{   // Red tokens
-            {445, 125, {255, 0, 0}},   // Red 1
-            {485,  85, {255, 0, 0}},   // Red 2
-            {525, 125, {255, 0, 0}},   // Red 3
-            {485, 165, {255, 0, 0}}    // Red 4
+            {445, 125, 445, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 1
+            {485,  85, 485,  85, {255, 0, 0}, 0, 0, 0, 0}, // Red 2
+            {525, 125, 525, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 3
+            {485, 165, 485, 165, {255, 0, 0}, 0, 0, 0, 0}  // Red 4
     	},
     	{   // Green tokens
-            {125, 165, {0, 255, 0}},   // Green 1
-            { 85, 125, {0, 255, 0}},   // Green 2
-            {125,  85, {0, 255, 0}},   // Green 3
-            {165, 125, {0, 255, 0}}    // Green 4
+            {125, 165, 125, 165, {0, 255, 0}, 0, 0, 0, 0},
+            { 85, 125,  85, 125, {0, 255, 0}, 0, 0, 0, 0},
+            {125,  85, 125,  85, {0, 255, 0}, 0, 0, 0, 0},
+            {165, 125, 165, 125, {0, 255, 0}, 0, 0, 0, 0}
     	},
     	{   // Blue tokens
-            {485, 445, {0, 0, 255}},   // Blue 1
-            {525, 485, {0, 0, 255}},   // Blue 2
-            {485, 525, {0, 0, 255}},   // Blue 3
-            {445, 485, {0, 0, 255}}    // Blue 4
+            {485, 445, 485, 445, {0, 0, 255}, 0, 0, 0, 0},
+            {525, 485, 525, 485, {0, 0, 255}, 0, 0, 0, 0},
+            {485, 525, 485, 525, {0, 0, 255}, 0, 0, 0, 0},
+            {445, 485, 445, 485, {0, 0, 255}, 0, 0, 0, 0}
     	},
     	{   // Yellow tokens
-            {165, 485, {255, 255, 0}}, // Yellow 1
-            {125, 525, {255, 255, 0}}, // Yellow 2
-            { 85, 485, {255, 255, 0}}, // Yellow 3
-            {125, 445, {255, 255, 0}}  // Yellow 4
+            {165, 485, 165, 485, {255, 255, 0}, 0, 0, 0, 0},
+            {125, 525, 125, 525, {255, 255, 0}, 0, 0, 0, 0},
+            { 85, 485,  85, 485, {255, 255, 0}, 0, 0, 0, 0},
+            {125, 445, 125, 445, {255, 255, 0}, 0, 0, 0, 0}
     	}
     };
+
 
 
     int running = 1;
@@ -260,13 +262,13 @@ int main() {
                     // --- Move Token with Arrow Keys ---
                     case SDLK_RIGHT:
                         if (selectedColor != -1) {
-                            move_token(&tokens[selectedColor][selectedIndex[selectedColor]], +1);
+                            move_token(&tokens[selectedColor][selectedIndex[selectedColor]], +1, tokens);
                         }
                         break;
 
                     case SDLK_LEFT:
                         if (selectedColor != -1) {
-                            move_token(&tokens[selectedColor][selectedIndex[selectedColor]], -1);
+                            move_token(&tokens[selectedColor][selectedIndex[selectedColor]], -1, tokens);
                         }
                         break;
                 }
@@ -341,7 +343,7 @@ void draw_token(SDL_Renderer* renderer, Token token) {
 
 
 // Function to move Tokens
-void move_token(Token* token, int direction) {
+void move_token(Token* token, int direction, Token tokens[4][4]) {
     if (!token->inPlay) return;
 
     if (token->inHome) {
@@ -407,6 +409,30 @@ void move_token(Token* token, int direction) {
         token->homeStepIndex = 0;
         token->x = yellowHomePath[0].x;
         token->y = yellowHomePath[0].y;
+    }
+    // Check for collisions with other tokens
+    for (int c = 0; c < 4; c++) {
+    	for (int t = 0; t < 4; t++) {
+            Token* other = &tokens[c][t];
+
+            // Don't compare to itself or inactive tokens
+            if (other == token || !other->inPlay || other->inHome) continue;
+
+            // If another token is at the same location and is from a different color
+            if (other->x == token->x && other->y == token->y &&
+               (other->color.r != token->color.r ||
+             	other->color.g != token->color.g ||
+             	other->color.b != token->color.b)) {
+
+            	// Send the other token back to base
+            	other->x = other->baseX;
+            	other->y = other->baseY;
+            	other->stepIndex = 0;
+            	other->homeStepIndex = 0;
+            	other->inPlay = 0;
+            	other->inHome = 0;
+            }
+    	}
     }
 }
 
