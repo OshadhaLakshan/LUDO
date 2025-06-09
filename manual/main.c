@@ -95,46 +95,54 @@ int main() {
 
                     // --- Place Tokens ---
                     case SDLK_KP_7:  // Green
-                        if (greenIndex < 4) {
-                            tokens[GREEN][greenIndex].x = 65;
-                            tokens[GREEN][greenIndex].y = 265;
-                            tokens[GREEN][greenIndex].inPlay = 1;
-                            tokens[GREEN][greenIndex].stepIndex = startIndex[GREEN];
-                            selectedIndex[GREEN] = greenIndex;
-                            greenIndex++;
+                        for (int i = 0; i < 4; i++) {
+                            if (!tokens[GREEN][i].inPlay) {
+                                tokens[GREEN][i].x =  65;
+                                tokens[GREEN][i].y = 265;
+                                tokens[GREEN][i].inPlay = 1;
+                                tokens[GREEN][i].stepIndex = startIndex[GREEN];
+                                selectedIndex[GREEN] = i;
+                                break;
+                            }
                         }
                         break;
 
                     case SDLK_KP_9:  // Red
-                            if (redIndex < 4) {
-                            tokens[RED][redIndex].x = 345;
-                            tokens[RED][redIndex].y = 65;
-                            tokens[RED][redIndex].inPlay = 1;
-                            tokens[RED][redIndex].stepIndex = startIndex[RED];
-                            selectedIndex[RED] = redIndex;
-                            redIndex++;
+                        for (int i = 0; i < 4; i++) {
+                            if (!tokens[RED][i].inPlay) {
+                                tokens[RED][i].x = 345;
+                                tokens[RED][i].y =  65;
+                                tokens[RED][i].inPlay = 1;
+                                tokens[RED][i].stepIndex = startIndex[RED];
+                                selectedIndex[RED] = i;
+                                break;
+                            }
                         }
                         break;
 
                     case SDLK_KP_1:  // Yellow
-                        if (yellowIndex < 4) {
-                            tokens[YELLOW][yellowIndex].x = 265;
-                            tokens[YELLOW][yellowIndex].y = 545;
-                            tokens[YELLOW][yellowIndex].inPlay = 1;
-                            tokens[YELLOW][yellowIndex].stepIndex = startIndex[YELLOW];
-                            selectedIndex[YELLOW] = yellowIndex;
-                            yellowIndex++;
+                        for (int i = 0; i < 4; i++) {
+                            if (!tokens[YELLOW][i].inPlay) {
+                                tokens[YELLOW][i].x = 265;
+                                tokens[YELLOW][i].y = 545;
+                                tokens[YELLOW][i].inPlay = 1;
+                                tokens[YELLOW][i].stepIndex = startIndex[YELLOW];
+                                selectedIndex[YELLOW] = i;
+                                break;
+                            }
                         }
                         break;
 
                     case SDLK_KP_3:  // Blue
-                        if (blueIndex < 4) {
-                            tokens[BLUE][blueIndex].x = 545;
-                            tokens[BLUE][blueIndex].y = 345;
-                            tokens[BLUE][blueIndex].inPlay = 1;
-                            tokens[BLUE][blueIndex].stepIndex = startIndex[BLUE];
-                            selectedIndex[BLUE] = blueIndex;
-                            blueIndex++;
+                        for (int i = 0; i < 4; i++) {
+                            if (!tokens[BLUE][i].inPlay) {
+                                tokens[BLUE][i].x = 545;
+                                tokens[BLUE][i].y = 345;
+                                tokens[BLUE][i].inPlay = 1;
+                                tokens[BLUE][i].stepIndex = startIndex[BLUE];
+                                selectedIndex[BLUE] = i;
+                                break;
+                            }
                         }
                         break;
 

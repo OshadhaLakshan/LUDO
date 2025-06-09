@@ -99,13 +99,13 @@ Make sure you're in the directory where `main.c` and `icon.res` are located. The
 Compile the game with Windows:
 
 ```bash
-gcc main.c logic.c icon.res -o app.exe -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
+gcc main.c logic.c types.c icon.res -o app.exe -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
 ```
 
 Compile the game with Ubuntu:
 
 ```bash
-gcc main.c logic.c -o app `sdl2-config --cflags --libs` -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
+gcc main.c logic.c types.c -o app `sdl2-config --cflags --libs` -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
 ```
 
 ✅ If successful, this will create `app.exe` or `app`
