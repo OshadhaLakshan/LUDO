@@ -34,7 +34,7 @@ int main() {
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         imgWidth, imgHeight, SDL_WINDOW_SHOWN);
 
-    SDL_Surface* icon = IMG_Load("assets/icon.png");  // Use PNG or BMP here
+    SDL_Surface* icon = IMG_Load("assets/icon.png");
     if (icon) {
     	SDL_SetWindowIcon(window, icon);
     	SDL_FreeSurface(icon);
@@ -45,13 +45,11 @@ int main() {
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imageSurface);
     SDL_FreeSurface(imageSurface);
 
-    // Right after SDL and IMG_Init succeed
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
     	SDL_Log("IMG_Init error: %s", IMG_GetError());
     	return 1;
     }
 
-    // ✅ Add this block
     if (TTF_Init() == -1) {
     	printf("TTF_Init failed: %s\n", TTF_GetError());
         return 1;
@@ -69,25 +67,25 @@ int main() {
 
     // Keep tokens outside the loop so their state is preserved
     Token tokens[4][4] = {
-    	{   // Red tokens
+    	{   // --- Red tokens ---
             {445, 125, 445, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 1
             {485,  85, 485,  85, {255, 0, 0}, 0, 0, 0, 0}, // Red 2
             {525, 125, 525, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 3
             {485, 165, 485, 165, {255, 0, 0}, 0, 0, 0, 0}  // Red 4
     	},
-    	{   // Green tokens
+    	{   // --- Green tokens ---
             {125, 165, 125, 165, {0, 255, 0}, 0, 0, 0, 0},
             { 85, 125,  85, 125, {0, 255, 0}, 0, 0, 0, 0},
             {125,  85, 125,  85, {0, 255, 0}, 0, 0, 0, 0},
             {165, 125, 165, 125, {0, 255, 0}, 0, 0, 0, 0}
     	},
-    	{   // Blue tokens
+    	{   // --- Blue tokens ---
             {485, 445, 485, 445, {0, 0, 255}, 0, 0, 0, 0},
             {525, 485, 525, 485, {0, 0, 255}, 0, 0, 0, 0},
             {485, 525, 485, 525, {0, 0, 255}, 0, 0, 0, 0},
             {445, 485, 445, 485, {0, 0, 255}, 0, 0, 0, 0}
     	},
-    	{   // Yellow tokens
+    	{   // --- Yellow tokens ---
             {165, 485, 165, 485, {255, 255, 0}, 0, 0, 0, 0},
             {125, 525, 125, 525, {255, 255, 0}, 0, 0, 0, 0},
             { 85, 485,  85, 485, {255, 255, 0}, 0, 0, 0, 0},
@@ -111,6 +109,7 @@ int main() {
 
             if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
+
                     // --- Place Tokens ---
                     case SDLK_KP_7:  // Green
                         if (greenIndex < 4) {
@@ -184,7 +183,7 @@ int main() {
                         break;
 
 
-            	    // Optional: Cycle through tokens of same color
+            	    // --- Optional: Cycle through tokens of same color ---
                     case SDLK_TAB:
                         if (selectedColor != -1) {
                             int count = 0;

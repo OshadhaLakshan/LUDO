@@ -96,19 +96,34 @@ Or download and extract the ZIP.
 
 Make sure you're in the directory where `main.c` and `icon.res` are located. Then run:
 
+Compile the game with Windows:
+
 ```bash
 gcc main.c logic.c icon.res -o app.exe -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
 ```
 
-✅ If successful, this will create `app.exe`.
+Compile the game with Ubuntu:
+
+```bash
+gcc main.c logic.c -o app `sdl2-config --cflags --libs` -Iinclude -Llib -lSDL2 -lSDL2_image -lSDL2_ttf
+```
+
+✅ If successful, this will create `app.exe` or `app`
+
 ---
 
 ### ✅ 7. Run the Game
 
-Launch the game with:
+Launch the game with Windows:
 
 ```bash
 app
+```
+
+Launch the game with Ubuntu:
+
+```bash
+./app
 ```
 
 Enjoy the colorful UCSC-themed LUDO experience! 🎉
@@ -145,7 +160,7 @@ Enjoy the colorful UCSC-themed LUDO experience! 🎉
 
 ## 🧰 Project Structure
 
-```
+```bash
 .
 ├── main.c          # Main function
 ├── logic.c          # Game logic
@@ -207,6 +222,6 @@ MIT License. Use it for fun or for learning — feel free to fork and improve!
 
 ---
 
-## 🌟 Give it a Star!
+## 🌟 Give it a Star
 
 If you enjoyed this project, give it a ⭐ on GitHub!

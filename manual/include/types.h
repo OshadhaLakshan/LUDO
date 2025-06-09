@@ -1,7 +1,7 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#include <SDL.h>  // or <SDL.h> depending on your setup
+#include <SDL.h>
 
 // Player colors
 enum {
