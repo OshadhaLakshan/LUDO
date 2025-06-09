@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#define TOTAL_STEPS 52
+
 #include <SDL.h>
 
 // Player colors
@@ -20,49 +22,38 @@ static const int startIndex[4] = {
 };
 
 // Token structure
-typedef struct {
+typedef struct Token {
     int x, y;                   // Current position on screen
     int baseX, baseY;           // Original base position
-    SDL_Color color;
+    SDL_Color color;		// Token color
     int stepIndex;              // Index in universal path
     int homeStepIndex;          // Index in home path
     int inPlay;                 // 1 = in play, 0 = in base
     int inHome;                 // 1 = in final home path
+    int isBlockade;		// 1 = in a Blockade
     int reachedHome;            // 1 = reached home
+
+    struct Token* partner; 	// Pointer to the other token in the blockade
 } Token;
 
-// Home paths for each color
-static const SDL_Point redHomePath[7] = {
-    {305, 25}, {305, 65}, {305, 105}, {305, 145},
-    {305, 185}, {305, 225}, {305, 265}
-};
+typedef struct {
+    char letter;
+    int x, y;
+} LetterDraw;
 
-static const SDL_Point greenHomePath[7] = {
-    {25, 305}, {65, 305}, {105, 305}, {145, 305},
-    {185, 305}, {225, 305}, {265, 305}
-};
+// Declare global tokens array (defined elsewhere)
+extern Token tokens[4][4];
 
-static const SDL_Point blueHomePath[7] = {
-    {585, 305}, {545, 305}, {505, 305}, {465, 305},
-    {425, 305}, {385, 305}, {345, 305}
-};
+extern LetterDraw letters[];
 
-static const SDL_Point yellowHomePath[7] = {
-    {305, 585}, {305, 545}, {305, 505}, {305, 465},
-    {305, 425}, {305, 385}, {305, 345}
-};
+// Declare paths (read-only arrays)
+extern const SDL_Point universalPath[TOTAL_STEPS];
+extern const SDL_Point redHomePath[7];
+extern const SDL_Point greenHomePath[7];
+extern const SDL_Point blueHomePath[7];
+extern const SDL_Point yellowHomePath[7];
 
-// Universal path for all tokens
-static const SDL_Point universalPath[52] = {
-    {345,  65}, {345, 105}, {345, 145}, {345, 185}, {345, 225}, {385, 265},
-    {425, 265}, {465, 265}, {505, 265}, {545, 265}, {585, 265}, {585, 305},
-    {585, 345}, {545, 345}, {505, 345}, {465, 345}, {425, 345}, {385, 345},
-    {345, 385}, {345, 425}, {345, 465}, {345, 505}, {345, 545}, {345, 585},
-    {305, 585}, {265, 585}, {265, 545}, {265, 505}, {265, 465}, {265, 425},
-    {265, 385}, {225, 345}, {185, 345}, {145, 345}, {105, 345}, { 65, 345},
-    { 25, 345}, { 25, 305}, { 25, 265}, { 65, 265}, {105, 265}, {145, 265},
-    {185, 265}, {225, 265}, {265, 225}, {265, 185}, {265, 145}, {265, 105},
-    {265,  65}, {265,  25}, {305,  25}, {345,  25}
-};
+// Starting step index for each color
+extern const int startIndex[4];
 
 #endif  // TYPES_H

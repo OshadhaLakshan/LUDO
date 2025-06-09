@@ -1,6 +1,7 @@
 #define TOTAL_STEPS 52
 #define SDL_MAIN_HANDLED
 
+#include <time.h> 
 #include <math.h>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -9,6 +10,10 @@
 #include <logic.h>
 
 int main() {
+    // Initialize random seed
+    srand(time(NULL));
+
+    // Initialize SDL subsystems
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -65,35 +70,7 @@ int main() {
     int selectedColor = -1;  // -1 means no color selected
     int selectedIndex[4] = {0, 0, 0, 0};  // Which token of each color was placed last
 
-    // Keep tokens outside the loop so their state is preserved
-    Token tokens[4][4] = {
-    	{   // --- Red tokens ---
-            {445, 125, 445, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 1
-            {485,  85, 485,  85, {255, 0, 0}, 0, 0, 0, 0}, // Red 2
-            {525, 125, 525, 125, {255, 0, 0}, 0, 0, 0, 0}, // Red 3
-            {485, 165, 485, 165, {255, 0, 0}, 0, 0, 0, 0}  // Red 4
-    	},
-    	{   // --- Green tokens ---
-            {125, 165, 125, 165, {0, 255, 0}, 0, 0, 0, 0},
-            { 85, 125,  85, 125, {0, 255, 0}, 0, 0, 0, 0},
-            {125,  85, 125,  85, {0, 255, 0}, 0, 0, 0, 0},
-            {165, 125, 165, 125, {0, 255, 0}, 0, 0, 0, 0}
-    	},
-    	{   // --- Blue tokens ---
-            {485, 445, 485, 445, {0, 0, 255}, 0, 0, 0, 0},
-            {525, 485, 525, 485, {0, 0, 255}, 0, 0, 0, 0},
-            {485, 525, 485, 525, {0, 0, 255}, 0, 0, 0, 0},
-            {445, 485, 445, 485, {0, 0, 255}, 0, 0, 0, 0}
-    	},
-    	{   // --- Yellow tokens ---
-            {165, 485, 165, 485, {255, 255, 0}, 0, 0, 0, 0},
-            {125, 525, 125, 525, {255, 255, 0}, 0, 0, 0, 0},
-            { 85, 485,  85, 485, {255, 255, 0}, 0, 0, 0, 0},
-            {125, 445, 125, 445, {255, 255, 0}, 0, 0, 0, 0}
-    	}
-    };
-
-
+    init_game();
 
     int running = 1;
     SDL_Event e;
@@ -102,6 +79,12 @@ int main() {
     int redIndex = 0;
     int blueIndex = 0;
     int yellowIndex = 0;
+
+    // Now draw all letters, including '?'
+    int numLetters = 11;
+
+    LetterDraw questionMark;
+    place_random_question_mark(&questionMark, letters, numLetters);
 
     while (running) {
         while (SDL_PollEvent(&e)) {
@@ -216,26 +199,17 @@ int main() {
 
 	SDL_Color black = {0, 0, 0, 255};  // Custom color
 
-	draw_letter(renderer, font, 'B', 155, 345, black);
-	draw_letter(renderer, font, 'K', 355,  25, black);
-	draw_letter(renderer, font, 'P', 395, 345, black);
-	draw_letter(renderer, font, '?', 355, 505, black);
+        for (int i = 0; i < numLetters; i++) {
+            draw_letter(renderer, font, letters[i].letter, letters[i].x, letters[i].y, black);
+        }
 
-	draw_letter(renderer, font, 'o', 315,  25, black);
-	draw_letter(renderer, font, 'o',  35, 305, black);
-	draw_letter(renderer, font, 'o', 595, 305, black);
-	draw_letter(renderer, font, 'o', 315, 585, black);
-
-	draw_letter(renderer, font, 'x',  75, 265, black);
-	draw_letter(renderer, font, 'x', 275, 545, black);
-	draw_letter(renderer, font, 'x', 555, 345, black);
-	draw_letter(renderer, font, 'x', 355,  65, black);
+        // Draw '?' separately
+        draw_letter(renderer, font, questionMark.letter, questionMark.x, questionMark.y, black);
 
         for (int i = 0; i < 4; i++) {
-	    for (int j = 0; j < 4; j++) {
-            	draw_token(renderer, tokens[i][j], (i == selectedColor && j == selectedIndex[i]));
-
-	    }
+            for (int j = 0; j < 4; j++) {
+                draw_token(renderer, tokens[i][j], (i == selectedColor && j == selectedIndex[i]));
+            }
         }
 
         SDL_RenderPresent(renderer);

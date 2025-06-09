@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <SDL_ttf.h>
 #include <logic.h>
+#include <types.h>
+#include <stdlib.h>
 
 #define TOTAL_STEPS 52
 
@@ -84,6 +86,54 @@ void draw_letter(SDL_Renderer* renderer, TTF_Font* font, char letter, int x, int
     SDL_DestroyTexture(texture);
 }
 
+void place_random_question_mark(LetterDraw* questionMark, const LetterDraw* letters, int numLetters) {
+    int maxAttempts = 1000;
+    int attempts = 0;
+    int valid = 0;
+
+    while (!valid && attempts < maxAttempts) {
+        attempts++;
+        int index = rand() % 52;
+        SDL_Point candidate = universalPath[index];
+        valid = 1;
+
+        // Check: Not in home paths
+        for (int i = 0; i < 7; i++) {
+            if ((candidate.x == redHomePath[i].x && candidate.y == redHomePath[i].y) ||
+                (candidate.x == greenHomePath[i].x && candidate.y == greenHomePath[i].y) ||
+                (candidate.x == blueHomePath[i].x && candidate.y == blueHomePath[i].y) ||
+                (candidate.x == yellowHomePath[i].x && candidate.y == yellowHomePath[i].y)) {
+                valid = 0;
+                break;
+            }
+        }
+
+        // Check: Not overlapping with 'o' or 'x' letters
+        for (int i = 0; i < numLetters && valid; i++) {
+            char ch = letters[i].letter;
+            if ((ch == 'o' || ch == 'x') &&
+                candidate.x == letters[i].x &&
+                candidate.y == letters[i].y) {
+                valid = 0;
+                break;
+            }
+        }
+
+        if (valid) {
+            questionMark->letter = '?';
+            questionMark->x = candidate.x + 10;
+            questionMark->y = candidate.y;
+            printf("Placed ? at (%d, %d)\n", candidate.x, candidate.y); // Optional debug
+            return; // Position found, exit function
+        }
+    }
+
+    // Fallback if no valid position found
+    questionMark->letter = '?';
+    questionMark->x = universalPath[0].x;
+    questionMark->y = universalPath[0].y;
+    printf("Fallback: Placed ? at (%d, %d)\n", questionMark->x, questionMark->y);
+}
 
 // Function to move Tokens
 void move_token(Token* token, int direction, Token tokens[4][4]) {
@@ -113,6 +163,24 @@ void move_token(Token* token, int direction, Token tokens[4][4]) {
         token->y = pos.y;
         return;
     }
+
+          // If it's a blockade, move both tokens together
+          if (token->isBlockade && token->partner != NULL) {
+        	Token* partner = token->partner;
+
+        	// Move both tokens recursively, but prevent infinite loops by breaking the link temporarily
+        	token->partner = NULL;
+        	partner->partner = NULL;
+
+        	move_token(partner, direction, tokens);  // Move partner first
+        	move_token(token, direction, tokens);    // Then move this token
+
+        	// Restore blockade link
+        	token->partner = partner;
+        	partner->partner = token;
+
+        	return;
+          }
 
     // Move on the universal path
     token->stepIndex = (token->stepIndex + direction + TOTAL_STEPS) % TOTAL_STEPS;
@@ -164,21 +232,25 @@ void move_token(Token* token, int direction, Token tokens[4][4]) {
                 if (token->color.r == 255 && token->color.g == 0 && token->color.b == 0 &&
                     token->x == redHomePath[7].x && token->y == redHomePath[7].y) {
                     token->reachedHome = 1;
+		    printf("Red Token has reached Home!\n");
                 }
                 // Yellow
                 else if (token->color.r == 255 && token->color.g == 255 && token->color.b == 0 &&
                     token->x == yellowHomePath[7].x && token->y == yellowHomePath[7].y) {
                     token->reachedHome = 1;
+		    printf("Yellow Token has reached Home!\n");
                 }
                 // Green
                 else if (token->color.r == 0 && token->color.g == 255 && token->color.b == 0 &&
                     token->x == greenHomePath[7].x && token->y == greenHomePath[7].y) {
                     token->reachedHome = 1;
+		    printf("Green Token has reached Home!\n");
                 }
                 // Blue
                 else if (token->color.r == 0 && token->color.g == 0 && token->color.b == 255 &&
                     token->x == blueHomePath[7].x && token->y == blueHomePath[7].y) {
                     token->reachedHome = 1;
+		    printf("Blue Token has reached Home!\n");
                 }
             }
 
@@ -189,28 +261,74 @@ void move_token(Token* token, int direction, Token tokens[4][4]) {
             break;
     }
 
-    // Check for collisions with other tokens
     for (int c = 0; c < 4; c++) {
-    	for (int t = 0; t < 4; t++) {
+        for (int t = 0; t < 4; t++) {
             Token* other = &tokens[c][t];
 
-            // Don't compare to itself or inactive tokens
-            if (other == token || !other->inPlay || other->inHome) continue;
+            if (other == token || !other->inPlay || other->inHome)
+                continue;
 
-            // If another token is at the same location and is from a different color
-            if (other->x == token->x && other->y == token->y &&
-               (other->color.r != token->color.r ||
-             	other->color.g != token->color.g ||
-             	other->color.b != token->color.b)) {
+            // 💥 Check collision
+            if (other->x == token->x && other->y == token->y) {
+                int isOpponent = (other->color.r != token->color.r ||
+                                other->color.g != token->color.g ||
+                                other->color.b != token->color.b);
 
-            	// Send the other token back to base
-            	other->x = other->baseX;
-            	other->y = other->baseY;
-            	other->stepIndex = 0;
-            	other->homeStepIndex = 0;
-            	other->inPlay = 0;
-            	other->inHome = 0;
+                if (isOpponent) {
+                    // 🎯 Opponent collision logic
+                    if (other->isBlockade) {
+                        if (token->isBlockade) {
+                            // Blockade vs Blockade – both get sent to base
+                            Token* p1 = other->partner;
+                            other->x = other->baseX;
+                            other->y = other->baseY;
+                            other->stepIndex = 0;
+                            other->inPlay = 0;
+                            other->inHome = 0;
+                            other->isBlockade = 0;
+                            other->partner = NULL;
+
+                            if (p1) {
+                                p1->x = p1->baseX;
+                                p1->y = p1->baseY;
+                                p1->stepIndex = 0;
+                                p1->inPlay = 0;
+                                p1->inHome = 0;
+                                p1->isBlockade = 0;
+                                p1->partner = NULL;
+                            }
+
+                            printf("Opponent's blockade broken by your blockade!\n");
+                        } else {
+                            // Single token cannot capture blockade
+                            printf("Cannot break a blockade with a single token!\n");
+                            return; // Cancel the move or skip
+                        }
+                    } else {
+                        // Single token gets captured
+                        other->x = other->baseX;
+                        other->y = other->baseY;
+                        other->stepIndex = 0;
+                        other->homeStepIndex = 0;
+                        other->inPlay = 0;
+                        other->inHome = 0;
+                        other->isBlockade = 0;
+                        other->partner = NULL;
+
+                        printf("Token was sent back to Base!\n");
+                    }
+
+                } else {
+                    // 🧱 Same-color – form blockade
+                    if (!token->isBlockade && !other->isBlockade) {
+                        token->isBlockade = 1;
+                        other->isBlockade = 1;
+                        token->partner = other;
+                        other->partner = token;
+                        printf("Two tokens formed a blockade!\n");
+                    }
+                }
             }
-    	}
+        }
     }
 }
