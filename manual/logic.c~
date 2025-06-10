@@ -3,7 +3,6 @@
 #include <logic.h>
 #include <types.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #define TOTAL_STEPS 52
 
@@ -87,67 +86,54 @@ void draw_letter(SDL_Renderer* renderer, TTF_Font* font, char letter, int x, int
     SDL_DestroyTexture(texture);
 }
 
-void place_random_question_mark(LetterDraw* questionMark,
-                                const LetterDraw* letters,
-                                int numLetters,
-                                TTF_Font* font)
-{
-    const int maxAttempts = 100;
+void place_random_question_mark(LetterDraw* questionMark, const LetterDraw* letters, int numLetters) {
+    int maxAttempts = 100;
     int attempts = 0;
+    int valid = 0;
 
-    int qmW = 0, qmH = 0;
-    TTF_SizeText(font, "?", &qmW, &qmH);
+    while (!valid && attempts < maxAttempts) {
+        attempts++;
+        int index = rand() % 52;
+        SDL_Point candidate = universalPath[index];
+        valid = 1;
 
-    while (attempts++ < maxAttempts) {
-        int idx = rand() % 52;
-        SDL_Point cand = universalPath[idx];
-
-        SDL_Rect qmRect = {cand.x, cand.y, qmW, qmH};
-
-        // Check home paths
-        bool inHome = false;
-        for (int i = 0; i < 7 && !inHome; i++) {
-            if ((cand.x == redHomePath[i].x && cand.y == redHomePath[i].y) ||
-                (cand.x == greenHomePath[i].x && cand.y == greenHomePath[i].y) ||
-                (cand.x == blueHomePath[i].x && cand.y == blueHomePath[i].y) ||
-                (cand.x == yellowHomePath[i].x && cand.y == yellowHomePath[i].y)) {
-                inHome = true;
+        // Check: Not in home paths
+        for (int i = 0; i < 7; i++) {
+            if ((candidate.x == redHomePath[i].x && candidate.y == redHomePath[i].y) ||
+                (candidate.x == greenHomePath[i].x && candidate.y == greenHomePath[i].y) ||
+                (candidate.x == blueHomePath[i].x && candidate.y == blueHomePath[i].y) ||
+                (candidate.x == yellowHomePath[i].x && candidate.y == yellowHomePath[i].y)) {
+                valid = 0;
+                break;
             }
         }
-        if (inHome) continue;
 
-        // Check overlap with 'o' or 'x' or 'K' or 'P' or 'B'
-        bool overlap = false;
-        for (int i = 0; i < numLetters && !overlap; i++) {
+        // Check: Not overlapping with 'o' or 'x' letters
+        for (int i = 0; i < numLetters && valid; i++) {
             char ch = letters[i].letter;
-            if (ch != 'o' && ch != 'x' && ch != 'K' && ch != 'P' && ch != 'B') continue;
-
-            int lw = 0, lh = 0;
-            char txt[2] = { ch, '\0' };
-            TTF_SizeText(font, txt, &lw, &lh);
-
-            SDL_Rect letRect = {letters[i].x, letters[i].y, lw, lh};
-            if (SDL_HasIntersection(&qmRect, &letRect)) {
-                overlap = true;
+            if ((ch == 'o' || ch == 'x') &&
+                candidate.x == letters[i].x &&
+                candidate.y == letters[i].y) {
+                valid = 0;
+                break;
             }
         }
-        if (overlap) continue;
 
-        // Valid position found
-        questionMark->letter = '?';
-        questionMark->x = cand.x;
-        questionMark->y = cand.y;
-        printf("Placed ? at (%d, %d)\n", cand.x, cand.y);
-        return;
+        if (valid) {
+            questionMark->letter = '?';
+            questionMark->x = candidate.x + 10;
+            questionMark->y = candidate.y;
+            printf("Placed ? at (%d, %d)\n", candidate.x + 10, candidate.y); // Optional debug
+            return; // Position found, exit function
+        }
     }
 
-    // fallback
+    // Fallback if no valid position found
     questionMark->letter = '?';
     questionMark->x = universalPath[0].x;
     questionMark->y = universalPath[0].y;
     printf("Fallback: Placed ? at (%d, %d)\n", questionMark->x, questionMark->y);
 }
-
 
 // Function to move Tokens
 void move_token(Token* token, int direction, Token tokens[4][4]) {

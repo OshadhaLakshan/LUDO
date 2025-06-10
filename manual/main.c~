@@ -86,7 +86,7 @@ int main() {
     int numLetters = 11;
 
     LetterDraw questionMark;
-    place_random_question_mark(&questionMark, letters, numLetters, font);
+    place_random_question_mark(&questionMark, letters, numLetters);
 
     while (running) {
         while (SDL_PollEvent(&e)) {
@@ -158,56 +158,30 @@ int main() {
                     case SDLK_j: selectedColor = YELLOW; break;
                     case SDLK_l: selectedColor = BLUE; break;
 		
-                    case SDLK_RIGHT: {
-                        int diceRoll1 = (rand() % 6) + 1;
-                        // Move in clockwise direction
-                        // Check if a token is selected
+                    // --- Move Token with Arrow Keys ---
+                    case SDLK_RIGHT:
+                int diceRoll1 = (rand() % 6) + 1;
                         if (selectedColor != -1) {
                             Token *token = &tokens[selectedColor][selectedIndex[selectedColor]];
+                            // Only move clockwise if token not at end
                             if (!token->reachedHome) {
-                                int moveSteps = diceRoll1;
-                                printf("Dice rolled: %d\n", diceRoll1);
-                                if (token->isBlockade) {  // Assuming you have this flag or check function
-                                    moveSteps = diceRoll1 / 2;
-                                    if (moveSteps == 0) moveSteps = 1;  // Minimum 1 step
-                                }
-                                printf("%s player moved token[%d] (%d) tiles in clockwise direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], moveSteps);
-                                move_token(token, +moveSteps, tokens);
-                                if (token->inHome && token->homeStepIndex == 6) {
-                                    // If the token is in home path and reached the end
-                                    token->reachedHome = 1;
-                                    printf("%s token[%d] has reached Home!\n", colorNames[selectedColor], selectedIndex[selectedColor]);
-                                }
+				printf("%s player moved token[%d] (%d) tiles in clockwise direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], diceRoll1);
+                                move_token(token, +diceRoll1, tokens);
                             }
                         }
                         break;
-                    }
 
-                    case SDLK_LEFT: {
-                        int diceRoll2 = (rand() % 6) + 1;
-                        // Move in counter-clockwise direction
-                        // Check if a token is selected
+                    case SDLK_LEFT:
+                int diceRoll2 = (rand() % 6) + 1;
                         if (selectedColor != -1) {
                             Token *token = &tokens[selectedColor][selectedIndex[selectedColor]];
+                            // Move anticlockwise only if NOT in home path and NOT reached end
                             if (!token->inHome && !token->reachedHome) {
-                                // If the token is not in home path and not reached home
-                                printf("Dice rolled: %d\n", diceRoll2);
-                                int moveSteps = diceRoll2;
-                                if (token->isBlockade) {
-                                    moveSteps = diceRoll2 / 2;
-                                    if (moveSteps == 0) moveSteps = 1;
-                                }
-                                printf("%s player moved token[%d] (%d) tiles in counter direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], moveSteps);
-                                move_token(token, -moveSteps, tokens);
-                                if (token->inHome && token->homeStepIndex == 6) {
-                                    // If the token is in home path and reached the end
-                                    token->reachedHome = 1;
-                                    printf("%s token[%d] has reached Home!\n", colorNames[selectedColor], selectedIndex[selectedColor]);
-                                }
-                            }                            
+				printf("%s player moved token[%d] (%d) tiles in counter direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], diceRoll2);
+                                move_token(token, -diceRoll2, tokens);
+                            }
                         }
                         break;
-                    }
 
 
             	    // --- Optional: Cycle through tokens of same color ---
@@ -248,7 +222,7 @@ int main() {
         }
 
         // Draw '?' separately
-        draw_letter(renderer, font, questionMark.letter, questionMark.x + 10, questionMark.y, black);
+        draw_letter(renderer, font, questionMark.letter, questionMark.x, questionMark.y, black);
 
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {

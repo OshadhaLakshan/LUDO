@@ -1,7 +1,5 @@
 #include <types.h>
 
-const char* colorNames[] = {"Red", "Green", "Blue", "Yellow"};
-
 // Home paths for each color
 const SDL_Point redHomePath[7] = {
     {305, 25}, {305, 65}, {305, 105}, {305, 145},

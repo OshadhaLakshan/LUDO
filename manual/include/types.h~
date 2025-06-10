@@ -13,6 +13,8 @@ enum {
     YELLOW = 3
 };
 
+const char* colorNames[] = {"Red", "Green", "Blue", "Yellow"};
+
 // Starting indices for each color in the universal path
 static const int startIndex[4] = {
     0,   // Red
@@ -45,8 +47,6 @@ typedef struct {
 extern Token tokens[4][4];
 
 extern LetterDraw letters[];
-
-extern const char* colorNames[4];
 
 // Declare paths (read-only arrays)
 extern const SDL_Point universalPath[TOTAL_STEPS];
