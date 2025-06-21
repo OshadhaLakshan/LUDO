@@ -10,8 +10,6 @@
 #include <logic.h>
 #include <stdbool.h>
 
-int tokenStartX[4] = {345, 65, 545, 265};
-int tokenStartY[4] = {65, 265, 345, 545};
 
 int main() {
     // Initialize random seed
@@ -171,6 +169,10 @@ int main() {
                     }
 
                     case SDLK_RETURN: {
+
+                        int tokenStartX[4] = {345, 65, 545, 265};
+                        int tokenStartY[4] = {65, 265, 345, 545};
+
                         Token* token = &tokens[selectedColor][selectedIndex[selectedColor]];
 
                         if (!token->inPlay && diceRoll == 6) {
