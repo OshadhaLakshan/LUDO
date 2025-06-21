@@ -148,6 +148,73 @@ void place_random_question_mark(LetterDraw* questionMark,
     printf("Fallback: Placed ? at (%d, %d)\n", questionMark->x, questionMark->y);
 }
 
+void print_dice_ascii(int value) {
+    const char* red = "\033[31m";       // Red
+    const char* yellow = "\033[33m";    // Yellow
+    const char* reset = "\033[0m";      // Reset
+
+    const char* dice_faces[6] = {
+        "+---------+\n"
+        "|         |\n"
+        "|    o    |\n"
+        "|         |\n"
+        "+---------+\n",
+
+        "+---------+\n"
+        "|  o      |\n"
+        "|         |\n"
+        "|      o  |\n"
+        "+---------+\n",
+
+        "+---------+\n"
+        "|  o      |\n"
+        "|    o    |\n"
+        "|      o  |\n"
+        "+---------+\n",
+
+        "+---------+\n"
+        "|  o   o  |\n"
+        "|         |\n"
+        "|  o   o  |\n"
+        "+---------+\n",
+
+        "+---------+\n"
+        "|  o   o  |\n"
+        "|    o    |\n"
+        "|  o   o  |\n"
+        "+---------+\n",
+
+        "+---------+\n"
+        "|  o   o  |\n"
+        "|  o   o  |\n"
+        "|  o   o  |\n"
+        "+---------+\n"
+    };
+
+    if (value < 1 || value > 6) {
+        printf("Invalid dice value: %d\n", value);
+        return;
+    }
+
+    const char* face = dice_faces[value - 1];
+    const char* ptr = face;
+
+    while (*ptr) {
+        if (*ptr == '+') {
+            printf("%s+%s", red, reset);
+        } else if (*ptr == '-') {
+            printf("%s-%s", red, reset);
+        } else if (*ptr == '|') {
+            printf("%s|%s", red, reset);
+        } else if (*ptr == 'o') {
+            printf("%so%s", yellow, reset);
+        } else {
+            putchar(*ptr);
+        }
+        ptr++;
+    }
+}
+
 
 // Function to move Tokens
 void move_token(Token* token, int direction, Token tokens[4][4]) {

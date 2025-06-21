@@ -8,6 +8,10 @@
 #include <SDL_ttf.h>
 #include <types.h>
 #include <logic.h>
+#include <stdbool.h>
+
+int tokenStartX[4] = {345, 65, 545, 265};
+int tokenStartY[4] = {65, 265, 345, 545};
 
 int main() {
     // Initialize random seed
@@ -52,6 +56,8 @@ int main() {
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, imageSurface);
     SDL_FreeSurface(imageSurface);
 
+    SDL_Color black = {0, 0, 0, 255};
+
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
     	SDL_Log("IMG_Init error: %s", IMG_GetError());
     	return 1;
@@ -88,146 +94,122 @@ int main() {
     LetterDraw questionMark;
     place_random_question_mark(&questionMark, letters, numLetters, font);
 
-    while (running) {
-        while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_QUIT) running = 0;
+    int currentPlayer = GREEN; // 0: Green, 1: Red, 2: Yellow, 3: Blue
+    int diceRoll = 0;
+    bool awaitingMove = false;
+    bool allowAnotherTurn = false;
 
-            if (e.type == SDL_KEYDOWN) {
+    while (running) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+
+        // Draw background board
+        SDL_Rect destRect = {0, 0, imgWidth, imgHeight};
+        SDL_RenderCopy(renderer, texture, NULL, &destRect);
+
+        // Draw letters and '?'
+        for (int i = 0; i < numLetters; i++)
+            draw_letter(renderer, font, letters[i].letter, letters[i].x, letters[i].y, black);
+
+        draw_letter(renderer, font, questionMark.letter, questionMark.x + 10, questionMark.y, black);
+
+        // Draw all tokens
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                draw_token(renderer, tokens[i][j], (i == selectedColor && j == selectedIndex[i]));
+
+        // === AUTOMATE TURN START ===
+        if (!awaitingMove) {
+            diceRoll = (rand() % 6) + 1;
+            printf("\n%s rolled a %d\n", colorNames[currentPlayer], diceRoll);
+            print_dice_ascii(diceRoll);
+
+            // Auto-select first in-play token or suggest base move
+            bool tokenFound = false;
+            for (int i = 0; i < 4; i++) {
+                if (tokens[currentPlayer][i].inPlay && !tokens[currentPlayer][i].reachedHome) {
+                    selectedIndex[currentPlayer] = i;
+                    tokenFound = true;
+                    break;
+                }
+            }
+            selectedColor = currentPlayer;
+
+            if (!tokenFound && diceRoll == 6) {
+                // Find a token in base
+                for (int i = 0; i < 4; i++) {
+                    if (!tokens[currentPlayer][i].inPlay) {
+                        selectedIndex[currentPlayer] = i;
+                        break;
+                    }
+                }
+            }
+
+            awaitingMove = true;
+        }
+
+        // === INPUT HANDLING ===
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT)
+                running = 0;
+
+            else if (e.type == SDL_KEYDOWN) {
                 switch (e.key.keysym.sym) {
 
-                    // --- Place Tokens ---
-                    case SDLK_KP_7:  // Green
-                        for (int i = 0; i < 4; i++) {
-                            if (!tokens[GREEN][i].inPlay) {
-                                tokens[GREEN][i].x =  65;
-                                tokens[GREEN][i].y = 265;
-                                tokens[GREEN][i].inPlay = 1;
-                                tokens[GREEN][i].stepIndex = startIndex[GREEN];
-                                selectedIndex[GREEN] = i;
-				printf("Green player moved token[%d] to (X) from BASE!\n", i);
-                                break;
-                            }
-                        }
-                        break;
+                    case SDLK_TAB: {
+                        // Cycle through in-play tokens
+                        int count = 0;
+                        int next = selectedIndex[selectedColor];
+                        do {
+                            next = (next + 1) % 4;
+                            count++;
+                        } while ((!tokens[selectedColor][next].inPlay || tokens[selectedColor][next].reachedHome) && count < 4);
 
-                    case SDLK_KP_9:  // Red
-                        for (int i = 0; i < 4; i++) {
-                            if (!tokens[RED][i].inPlay) {
-                                tokens[RED][i].x = 345;
-                                tokens[RED][i].y =  65;
-                                tokens[RED][i].inPlay = 1;
-                                tokens[RED][i].stepIndex = startIndex[RED];
-                                selectedIndex[RED] = i;
-				printf("Red player moved token[%d] to (X) from BASE!\n", i);
-                                break;
-                            }
-                        }
-                        break;
-
-                    case SDLK_KP_1:  // Yellow
-                        for (int i = 0; i < 4; i++) {
-                            if (!tokens[YELLOW][i].inPlay) {
-                                tokens[YELLOW][i].x = 265;
-                                tokens[YELLOW][i].y = 545;
-                                tokens[YELLOW][i].inPlay = 1;
-                                tokens[YELLOW][i].stepIndex = startIndex[YELLOW];
-                                selectedIndex[YELLOW] = i;
-				printf("Yellow player moved token[%d] to (X) from BASE!\n", i);
-                                break;
-                            }
-                        }
-                        break;
-
-                    case SDLK_KP_3:  // Blue
-                        for (int i = 0; i < 4; i++) {
-                            if (!tokens[BLUE][i].inPlay) {
-                                tokens[BLUE][i].x = 545;
-                                tokens[BLUE][i].y = 345;
-                                tokens[BLUE][i].inPlay = 1;
-                                tokens[BLUE][i].stepIndex = startIndex[BLUE];
-                                selectedIndex[BLUE] = i;
-				printf("Blue player moved token[%d] to (X) from BASE!\n", i);
-                                break;
-                            }
-                        }
-                        break;
-
-                    // --- Select Token by Color ---
-                    case SDLK_a: selectedColor = GREEN; break;
-                    case SDLK_d: selectedColor = RED; break;
-                    case SDLK_j: selectedColor = YELLOW; break;
-                    case SDLK_l: selectedColor = BLUE; break;
-		
-                    case SDLK_RIGHT: {
-                        int diceRoll1 = (rand() % 6) + 1;
-                        // Move in clockwise direction
-                        // Check if a token is selected
-                        if (selectedColor != -1) {
-                            Token *token = &tokens[selectedColor][selectedIndex[selectedColor]];
-                            if (!token->reachedHome) {
-                                int moveSteps = diceRoll1;
-                                printf("Dice rolled: %d\n", diceRoll1);
-                                if (token->isBlockade) {  // Assuming you have this flag or check function
-                                    moveSteps = diceRoll1 / 2;
-                                    if (moveSteps == 0) moveSteps = 1;  // Minimum 1 step
-                                }
-                                printf("%s player moved token[%d] (%d) tiles in clockwise direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], moveSteps);
-                                move_token(token, +moveSteps, tokens);
-                                if (token->inHome && token->homeStepIndex == 6) {
-                                    // If the token is in home path and reached the end
-                                    token->reachedHome = 1;
-                                    printf("%s token[%d] has reached Home!\n", colorNames[selectedColor], selectedIndex[selectedColor]);
-                                }
-                            }
-                        }
+                        if (tokens[selectedColor][next].inPlay && !tokens[selectedColor][next].reachedHome)
+                            selectedIndex[selectedColor] = next;
                         break;
                     }
 
-                    case SDLK_LEFT: {
-                        int diceRoll2 = (rand() % 6) + 1;
-                        // Move in counter-clockwise direction
-                        // Check if a token is selected
-                        if (selectedColor != -1) {
-                            Token *token = &tokens[selectedColor][selectedIndex[selectedColor]];
-                            if (!token->inHome && !token->reachedHome) {
-                                // If the token is not in home path and not reached home
-                                printf("Dice rolled: %d\n", diceRoll2);
-                                int moveSteps = diceRoll2;
-                                if (token->isBlockade) {
-                                    moveSteps = diceRoll2 / 2;
-                                    if (moveSteps == 0) moveSteps = 1;
-                                }
-                                printf("%s player moved token[%d] (%d) tiles in counter direction!\n", colorNames[selectedColor], selectedIndex[selectedColor], moveSteps);
-                                move_token(token, -moveSteps, tokens);
-                                if (token->inHome && token->homeStepIndex == 6) {
-                                    // If the token is in home path and reached the end
-                                    token->reachedHome = 1;
-                                    printf("%s token[%d] has reached Home!\n", colorNames[selectedColor], selectedIndex[selectedColor]);
-                                }
-                            }                            
+                    case SDLK_RETURN: {
+                        Token* token = &tokens[selectedColor][selectedIndex[selectedColor]];
+
+                        if (!token->inPlay && diceRoll == 6) {
+                            // Enter from base
+                            token->inPlay = 1;
+                            token->stepIndex = startIndex[currentPlayer];
+                            token->x = tokenStartX[currentPlayer];
+                            token->y = tokenStartY[currentPlayer];
+                            printf("%s token[%d] entered from base!\n", colorNames[currentPlayer], selectedIndex[selectedColor]);
+                            allowAnotherTurn = true;
+
+                        } else if (token->inPlay && !token->reachedHome) {
+                            // Move token
+                            int moveSteps = token->isBlockade ? diceRoll / 2 : diceRoll;
+                            if (moveSteps == 0) moveSteps = 1;
+                            move_token(token, moveSteps, tokens);
+
+                            if (token->inHome && token->homeStepIndex == 6) {
+                                token->reachedHome = 1;
+                                printf("%s token[%d] reached home!\n", colorNames[currentPlayer], selectedIndex[selectedColor]);
+                            }
+
+                            allowAnotherTurn = (diceRoll == 6);
                         }
-                        break;
-                    }
 
+                        awaitingMove = false;
 
-            	    // --- Optional: Cycle through tokens of same color ---
-                    case SDLK_TAB:
-                        if (selectedColor != -1) {
-                            int count = 0;
-                            int nextIndex = selectedIndex[selectedColor];
-
-                            // Find the next in-play token
-                            do {
-                                nextIndex = (nextIndex + 1) % 4;
-                                count++;
-                            } while (!tokens[selectedColor][nextIndex].inPlay && count < 4);
-
-                            if (tokens[selectedColor][nextIndex].inPlay) {
-                                selectedIndex[selectedColor] = nextIndex;
+                        if (!allowAnotherTurn) {
+                            // Rotate to next player
+                            switch (currentPlayer) {
+                                case GREEN: currentPlayer = RED; break;
+                                case RED: currentPlayer = BLUE; break;
+                                case BLUE: currentPlayer = YELLOW; break;
+                                case YELLOW: currentPlayer = GREEN; break;
                             }
                         }
-                        break;
 
+                        break;
+                    }
                 }
             }
         }
@@ -237,9 +219,7 @@ int main() {
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);  // Set white background
 	SDL_RenderClear(renderer);
 
-
-        SDL_Rect destRect = {0, 0, imgWidth, imgHeight};
-        SDL_RenderCopy(renderer, texture, NULL, &destRect);
+    SDL_RenderCopy(renderer, texture, NULL, &destRect);
 
 	SDL_Color black = {0, 0, 0, 255};  // Custom color
 
